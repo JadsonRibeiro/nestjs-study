@@ -1,21 +1,19 @@
-import { Controller, Get, Param, Req } from '@nestjs/common';
-import { Request } from 'express';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 
 import { AppService } from './app.service';
+import { User } from './interfaces/User';
 
 @Controller('/users')
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @Get()
-  getHello(@Req() request: Request): string {
-    console.log('request', request.query);
-    return this.appService.getHello();
+  getAllUsers(): User[] {
+    return this.appService.getAllUsers();
   }
 
-  @Get(':userName')
-  getUser(@Param() params: any): string {
-    console.log('params', params.userName);
-    return params.userName;
+  @Post()
+  getUser(@Body() body: User): void {
+    this.appService.addUser(body);
   }
 }
