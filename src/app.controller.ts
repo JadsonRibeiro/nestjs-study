@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpException,
+  HttpStatus,
+  Post,
+  UnauthorizedException,
+} from '@nestjs/common';
 
 import { AppService } from './app.service';
 import { User } from './interfaces/User';
@@ -9,7 +17,14 @@ export class AppController {
 
   @Get()
   getAllUsers(): User[] {
-    return this.appService.getAllUsers();
+    try {
+      throw new Error('Eror qualquer');
+      return this.appService.getAllUsers();
+    } catch (error) {
+      throw new UnauthorizedException('Você não tem autorização', {
+        cause: error,
+      });
+    }
   }
 
   @Post()
