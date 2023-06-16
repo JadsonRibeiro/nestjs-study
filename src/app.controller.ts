@@ -2,33 +2,67 @@ import {
   Body,
   Controller,
   Get,
-  HttpException,
-  HttpStatus,
+  Param,
   Post,
-  UnauthorizedException,
+  Put,
+  Query,
+  UseGuards,
+  UseInterceptors,
+  UsePipes,
 } from '@nestjs/common';
 
 import { AppService } from './app.service';
-import { User } from './interfaces/User';
+import { FindUsersDTO, User } from './classes/User';
+import { ZodValidationPipe } from './pipes/ZodValidation.pipe';
+import {
+  CreateUserDTO,
+  UpdateUserDTO,
+  createUserSchema,
+  updateUserSchema,
+} from './schemas/User';
+import { Public } from './decorators/Public.decorator';
+import { User as UserFromReq } from './decorators/User.decorator';
+import { Roles } from './decorators/Roles.decorator';
+import { RolesGuard } from './guards/Roles.guard';
+import { LoggerInterceptor } from './interceptors/Logger.interceptor';
 
 @Controller('/users')
+@UseGuards(RolesGuard)
+@UseInterceptors(LoggerInterceptor)
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
+  @Public()
   @Get()
-  getAllUsers(): User[] {
-    try {
-      throw new Error('Eror qualquer');
-      return this.appService.getAllUsers();
-    } catch (error) {
-      throw new UnauthorizedException('Você não tem autorização', {
-        cause: error,
-      });
-    }
+  findUsers(@Query() query: FindUsersDTO): User[] {
+    return this.appService.getAllUsers(query);
+  }
+
+  @Get(':id')
+  findUser(@Param('id') id: string): User {
+    return this.appService.getUser(id);
   }
 
   @Post()
-  getUser(@Body() body: User): void {
+  @Roles('admin')
+  @UsePipes(new ZodValidationPipe(createUserSchema))
+  createUser(@Body() body: CreateUserDTO): void {
     this.appService.addUser(body);
+  }
+
+  @Put(':id')
+  updateUser(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(updateUserSchema)) body: UpdateUserDTO,
+  ) {
+    this.appService.updateUser(id, body);
+  }
+
+  @Put('profile')
+  updateProfile(
+    @UserFromReq('id') id: string,
+    @Body(new ZodValidationPipe(updateUserSchema)) body: UpdateUserDTO,
+  ) {
+    this.appService.updateUser(id, body);
   }
 }

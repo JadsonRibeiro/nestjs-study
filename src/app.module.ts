@@ -4,14 +4,22 @@ import {
   NestModule,
   RequestMethod,
 } from '@nestjs/common';
+
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { LoggerMiddleware } from './middlewares/Logger';
+import { LoggerMiddleware } from './middlewares/Logger.middleware';
+import { AuthGuard } from './guards/Auth.guard';
 
 @Module({
   imports: [],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: 'APP_GUARD',
+      useClass: AuthGuard,
+    },
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
